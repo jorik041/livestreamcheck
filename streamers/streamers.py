@@ -14,7 +14,7 @@
 # endregion
 
 # region imports d
-import os
+import subprocess
 from configparser import ConfigParser  # Config fun
 import requests  # API fun
 from pathlib import Path
@@ -63,9 +63,9 @@ def config_set(config_path: Path) -> ConfigParser:
 
     # If our specified file doesn't exist, mkdir our directory
     if not config_path.exists():
-        Path.mkdir(Path(os.path.dirname(config_path)), parents=True, exist_ok=True)
+        Path.mkdir(config_path.parent, parents=True, exist_ok=True)
 
-    config_filepath = Path(os.path.join(config_path, config_file))
+    config_filepath = config_path / config_file
 
     # Check if the config file is present, and if not create it with dummy values
     if not config_filepath.is_file():
@@ -281,21 +281,25 @@ def start_player(stream: str, player_config: Dict[str, Any]) -> bool:
     if playerPath:
         # Start stream
         print("----------Starting stream----------")
-        if player_config["player"] in ["mpv", "streamlink", "iina"]:
+        if player_config["player"] in ["mpv", "streamlink"]:
+            cmd = [playerPath]
+            if player_config["arguments"]:
+                cmd.extend(player_config["arguments"].split())
+            cmd.append(f"https://twitch.tv/{stream}")
             logging.debug(
-                f"Starting {player_config['player']} with command: {playerPath} {player_config['arguments']} https://twitch.tv/{stream}"
+                f"Starting {player_config['player']} with command: {' '.join(cmd)}"
             )
-            os.system(
-                f"{playerPath} {player_config['arguments']} https://twitch.tv/{stream}"
-            )
-        elif player_config["player"] in ["vlc"]:
+            subprocess.run(cmd)
+        elif player_config["player"] in ["iina", "vlc"]:
             streams = streamlink.streams(f"https://twitch.tv/{stream}")
+            cmd = [playerPath, "--meta-title", stream, "--video-title", stream]
+            if player_config["arguments"]:
+                cmd.extend(player_config["arguments"].split())
+            cmd.append(streams["best"].url)
             logging.debug(
-                f"Starting {player_config['player']} with command: {playerPath} {player_config['arguments']} {streams['best'].url}"
+                f"Starting {player_config['player']} with command: {' '.join(cmd)}"
             )
-            os.system(
-                f"{playerPath} --meta-title \"{stream}\" --video-title \"{stream}\" {player_config['arguments']} {streams['best'].url}"
-            )
+            subprocess.run(cmd)
         else:
             print(f"{player_config['player']} is not currently supported at this time")
             return False

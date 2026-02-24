@@ -201,7 +201,7 @@ def test_write_results_with_streamlink(capsys, mpv_session_flags):
     assert stdout[3] == '69'
 
 
-def test_write_results_with_streamlink(capsys, vlc_session_flags):
+def test_write_results_with_vlc(capsys, vlc_session_flags):
 
     dummy_streams = {
         "data": [
