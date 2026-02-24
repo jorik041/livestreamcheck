@@ -299,7 +299,10 @@ def start_player(stream: str, player_config: Dict[str, Any]) -> bool:
             logging.debug(
                 f"Starting {player_config['player']} with command: {' '.join(cmd)}"
             )
-            subprocess.run(cmd)
+            try:
+                subprocess.run(cmd)
+            except KeyboardInterrupt:
+                print()
         else:
             print(f"{player_config['player']} is not currently supported at this time")
             return False
